@@ -33,22 +33,20 @@ function wrapRequest() {
         const zipkinOpts = Object.assign({}, opts, { headers });
 
         request(zipkinOpts, (error, response, body) => {
-          if (error || response.statusCode !== 200) {
-            tracer.scoped(() => {
+          tracer.scoped(() => {
               tracer.setId(traceId);
-              tracer.recordBinary('request.error', error || response.statusCode.toString());
-              tracer.recordAnnotation(new Annotation.ClientRecv());
-            });
-          } else {
-            tracer.scoped(() => {
-              tracer.setId(traceId);
-              tracer.recordBinary('http.status_code', response.statusCode.toString());  
-              tracer.recordAnnotation(new Annotation.ClientRecv());
-            });
-          }
 
-          callback(error, response, body);    
-      });
+              if (error || response.statusCode !== 200) {
+                  tracer.recordBinary('request.error', error || response.statusCode.toString());
+                  tracer.recordAnnotation(new Annotation.ClientRecv());
+              } else {
+                  tracer.recordBinary('http.status_code', response.statusCode.toString());  
+                  tracer.recordAnnotation(new Annotation.ClientRecv());
+              }
+
+              callback(error, response, body);    
+          });
+       });
     });
   };
 }
